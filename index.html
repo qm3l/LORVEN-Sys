@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لورڤين · النظام المحاسبي الأذكى</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons (Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Barcode Scanner -->
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+    
+    <style>
+        /* ========== متغيرات التصميم الأنيق ========== */
+        :root {
+            --bg: #FDF8F5;
+            --text: #2C3A4F;
+            --accent-1: #FF8A9C;
+            --accent-2: #A7C7E7;
+            --gradient: linear-gradient(145deg, #FF8A9C, #A7C7E7);
+            --success: #A3D9A5;
+            --warning: #FFD3B5;
+            --danger: #FFB3B3;
+            --gray-50: #F9F6F4;
+            --gray-100: #F0EBE8;
+            --gray-200: #E0D6D0;
+            --gray-500: #8F8A88;
+            --gray-800: #3D3A36;
+            
+            --shadow-sm: 0 6px 16px rgba(44,58,79,0.04);
+            --shadow-md: 0 12px 24px rgba(44,58,79,0.06);
+            --shadow-lg: 0 20px 32px rgba(44,58,79,0.08);
+            
+            --radius-md: 20px;
+            --radius-lg: 30px;
+            --radius-xl: 40px;
+            
+            --font: 'IBM Plex Sans Arabic', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        /* تطبيق ملء الشاشة بدون إطار */
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.02);
+        }
+
+        /* شريط الحالة – الوقت فقط */
+        .status-bar {
+            padding: 14px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--gray-800);
+            background: white;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        /* الهيدر مع زر الرجوع */
+        .page-header {
+            display: flex;
+            align-items: center;
+            padding: 14px 22px;
+            background: white;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .back-btn {
+            font-size: 24px;
+            color: var(--accent-1);
+            margin-left: 16px;
+            cursor: pointer;
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            background: var(--gray-50);
+            transition: 0.2s;
+        }
+        .back-btn:hover { background: var(--gray-100); }
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            flex: 1;
+        }
+        .notification-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        /* المحتوى الرئيسي القابل للتمرير */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 22px;
+            background: white;
+            scrollbar-width: thin;
+        }
+
+        /* القائمة السفلية الثابتة */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px 16px;
+            background: white;
+            border-top: 1px solid var(--gray-100);
+        }
+        .nav-btn {
+            background: transparent;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 40px;
+            color: var(--gray-500);
+            font-size: 12px;
+            font-weight: 500;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .nav-btn i { font-size: 24px; }
+        .nav-btn.active {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 8px 18px rgba(255,138,156,0.25);
+        }
+
+        /* بطاقة الإحصاءات – خلفية كاملة */
+        .stat-card {
+            background: var(--gradient);
+            border-radius: 28px;
+            padding: 20px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-md);
+        }
+        .stat-icon {
+            width: 48px; height: 48px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: white;
+        }
+        .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .stat-label { font-size: 14px; opacity: 0.9; }
+
+        /* الحقول والأزرار */
+        .form-group { margin-bottom: 20px; position: relative; }
+        .form-label {
+            display: block; font-size: 14px; font-weight: 600;
+            margin-bottom: 8px; color: var(--gray-800);
+        }
+        .form-control {
+            width: 100%; padding: 16px 20px;
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-radius: 30px;
+            font-size: 15px;
+            transition: 0.2s;
+            font-family: var(--font);
+        }
+        .form-control:focus {
+            outline: none; border-color: var(--accent-1);
+            background: white; box-shadow: 0 0 0 4px rgba(255,138,156,0.1);
+        }
+
+        .btn {
+            padding: 16px 24px; border-radius: 40px; font-size: 16px;
+            font-weight: 600; border: none; cursor: pointer;
+            transition: 0.2s; display: inline-flex; align-items: center;
+            justify-content: center; gap: 10px;
+        }
+        .btn-primary { background: var(--gradient); color: white; box-shadow: 0 8px 18px rgba(255,138,156,0.25); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(255,138,156,0.35); }
+        .btn-outline { background: white; border: 1.5px solid var(--accent-1); color: var(--accent-1); }
+        .btn-outline:hover { background: rgba(255,138,156,0.05); }
+        .btn-wa { background: #25D366; color: white; }
+        .btn-wa:hover { background: #20B859; }
+
+        /* الإجراءات السريعة – ملونة وجذابة */
+        .actions-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+            margin: 20px 0;
+        }
+        .action-item {
+            background: white; border: 1px solid var(--gray-200);
+            border-radius: 26px; padding: 16px 8px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .action-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .action-icon {
+            width: 60px; height: 60px;
+            background: var(--gradient);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 28px;
+            box-shadow: 0 6px 14px rgba(255,138,156,0.3);
+        }
+        .action-label { font-size: 12px; font-weight: 600; color: var(--text); }
+
+        /* منتجات */
+        .products-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .products-title { font-size: 24px; font-weight: 700; color: var(--text); } /* عنوان واحد */
+        .products-actions { display: flex; gap: 10px; }
+        .products-actions button {
+            width: 48px; height: 48px; border-radius: 20px;
+            border: 1px solid var(--gray-200); background: white;
+            color: var(--accent-1); font-size: 22px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .products-actions button:hover { background: var(--accent-1); color: white; }
+
+        .products-grid-container { max-height: 460px; overflow-y: auto; margin-top: 8px; }
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .product-card {
+            background: white; border-radius: 26px; padding: 18px;
+            border: 1px solid var(--gray-100); box-shadow: var(--shadow-sm);
+        }
+        .product-icon {
+            width: 64px; height: 64px; background: var(--gradient);
+            border-radius: 20px; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 28px; margin-bottom: 12px;
+        }
+
+        /* فاتورة */
+        .invoice-item {
+            display: flex; align-items: center; padding: 16px;
+            background: var(--gray-50); border-radius: 24px; margin-bottom: 10px;
+        }
+        .customer-card, .products-card, .summary-card {
+            background: white; border-radius: 28px; padding: 20px;
+            margin-bottom: 20px; border: 1px solid var(--gray-100);
+        }
+
+        /* صفحة الإعدادات – كل الخيارات تعمل */
+        .settings-list { background: white; border-radius: 32px; border: 1px solid var(--gray-100); overflow: hidden; }
+        .settings-item {
+            display: flex; align-items: center; padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-100); cursor: pointer; transition: 0.2s;
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:hover { background: var(--gray-50); }
+        .settings-icon {
+            width: 52px; height: 52px; background: rgba(255,138,156,0.08);
+            border-radius: 18px; display: flex; align-items: center; justify-content: center;
+            color: var(--accent-1); font-size: 22px; margin-left: 18px;
+        }
+        .settings-content { flex: 1; }
+        .settings-title { font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .settings-subtitle { font-size: 13px; color: var(--gray-500); }
+        .settings-arrow { color: var(--gray-500); font-size: 18px; }
+
+        /* مودالات أنيقة */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44,58,79,0.6); backdrop-filter: blur(6px);
+            align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 380px;
+            border-radius: 36px; overflow: hidden; box-shadow: var(--shadow-lg);
+            animation: fadeIn 0.25s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal-header {
+            padding: 24px; background: var(--gradient); color: white;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-title { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+        .modal-close { font-size: 28px; cursor: pointer; opacity: 0.8; }
+        .modal-close:hover { opacity: 1; }
+        .modal-body { padding: 28px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--text); color: white; padding: 16px 32px;
+            border-radius: 50px; font-weight: 500; box-shadow: var(--shadow-lg);
+            z-index: 3000; opacity: 0; transition: 0.3s;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* اقتراح العملاء */
+        .datalist-customers {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border-radius: 24px; box-shadow: var(--shadow-md);
+            max-height: 220px; overflow-y: auto; z-index: 150; display: none;
+        }
+        .datalist-item { padding: 16px 20px; border-bottom: 1px solid var(--gray-100); cursor: pointer; }
+        .datalist-item:hover { background: var(--gray-50); }
+
+        /* نتائج البحث */
+        .search-results {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border-radius: 24px; box-shadow: var(--shadow-md);
+            max-height: 280px; overflow-y: auto; z-index: 100; display: none;
+        }
+        .search-result-item {
+            display: flex; align-items: center; padding: 16px;
+            border-bottom: 1px solid var(--gray-100); cursor: pointer;
+        }
+        .search-result-item:hover { background: var(--gray-50); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- شريط الحالة: الوقت فقط -->
+        <div class="status-bar">
+            <span id="liveTime"></span>
+            <span></span> <!-- فارغ -->
+        </div>
+
+        <!-- الهيدر الديناميكي -->
+        <div id="dynamicHeader" class="page-header"></div>
+
+        <!-- المحتوى الرئيسي -->
+        <div id="mainContent" class="main-content"></div>
+
+        <!-- القائمة السفلية -->
+        <div class="bottom-nav" id="bottomNav">
+            <button class="nav-btn" onclick="switchPage('dashboard')"><i class="fas fa-home"></i><span>الرئيسية</span></button>
+            <button class="nav-btn" onclick="switchPage('products')"><i class="fas fa-box"></i><span>المنتجات</span></button>
+            <button class="nav-btn" onclick="switchPage('invoices')"><i class="fas fa-receipt"></i><span>الفواتير</span></button>
+            <button class="nav-btn" onclick="switchPage('reports')"><i class="fas fa-chart-pie"></i><span>التقارير</span></button>
+            <button class="nav-btn" onclick="switchPage('settings')"><i class="fas fa-cog"></i><span>الإعدادات</span></button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">لورڤين 🌸</div>
+
+    <!-- ========== المودالات الكاملة ========== -->
+
+    <!-- واتساب -->
+    <div class="modal" id="whatsappModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fab fa-whatsapp"></i> إرسال الفاتورة</div>
+                <div class="modal-close" onclick="closeModal('whatsappModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <div id="whatsappPreview" style="background: var(--gray-50); padding: 20px; border-radius: 24px; margin-bottom: 24px; direction: ltr; text-align: left; font-family: monospace; white-space: pre-wrap;"></div>
+                <div class="form-group">
+                    <label class="form-label">رقم العميلة</label>
+                    <input type="tel" class="form-control" id="whatsappPhoneNumber" placeholder="771234567">
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-outline" style="flex:1;" onclick="closeModal('whatsappModal')">إلغاء</button>
+                    <button class="btn btn-wa" style="flex:1;" onclick="sendWhatsApp()">إرسال</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إضافة منتج -->
+    <div class="modal" id="addProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-plus"></i> منتج جديد</div>
+                <div class="modal-close" onclick="closeModal('addProductModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">اسم المنتج</label>
+                    <input type="text" class="form-control" id="newProductName" placeholder="مثال: سيروم فيتامين سي">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الباركود (اتركه فارغاً للتوليد التلقائي)</label>
+                    <input type="text" class="form-control" id="newProductBarcode" placeholder="سيتم إنشاؤه تلقائياً">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">التكلفة</label>
+                        <input type="number" class="form-control" id="newProductCost" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">السعر</label>
+                        <input type="number" class="form-control" id="newProductPrice" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المخزون</label>
+                    <input type="number" class="form-control" id="newProductStock" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الفئة</label>
+                    <select class="form-control" id="newProductCategory">
+                        <option>عناية بالبشرة</option>
+                        <option>مكياج</option>
+                        <option>عناية بالشعر</option>
+                        <option>عطور</option>
+                        <option>منتجات طبيعية</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="width:100%;" onclick="addNewProduct()">حفظ المنتج</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- تعديل منتج -->
+    <div class="modal" id="editProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-edit"></i> تعديل المنتج</div>
+                <div class="modal-close" onclick="closeModal('editProductModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editProductId">
+                <div class="form-group">
+                    <label class="form-label">اسم المنتج</label>
+                    <input type="text" class="form-control" id="editProductName">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الباركود</label>
+                    <input type="text" class="form-control" id="editProductBarcode">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group"><label>التكلفة</label><input type="number" class="form-control" id="editProductCost"></div>
+                    <div class="form-group"><label>السعر</label><input type="number" class="form-control" id="editProductPrice"></div>
+                </div>
+                <div class="form-group"><label>المخزون</label><input type="number" class="form-control" id="editProductStock"></div>
+                <div class="form-group"><label>الفئة</label><select class="form-control" id="editProductCategory"></select></div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-outline" style="flex:1;" onclick="closeModal('editProductModal')">إلغاء</button>
+                    <button class="btn btn-primary" style="flex:1;" onclick="updateProduct()">تحديث</button>
+                </div>
+                <button class="btn btn-outline" style="width:100%; margin-top: 16px; color: var(--danger); border-color: var(--danger);" onclick="deleteProduct()">حذف المنتج</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- تفاصيل الفاتورة -->
+    <div class="modal" id="invoiceDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-file-invoice"></i> تفاصيل الفاتورة</div>
+                <div class="modal-close" onclick="closeModal('invoiceDetailsModal')">&times;</div>
+            </div>
+            <div class="modal-body" id="invoiceDetailsContent">
+                <!-- تُملأ ديناميكياً -->
+            </div>
+        </div>
+    </div>
+
+    <!-- البحث عن فاتورة برقمها -->
+    <div class="modal" id="searchInvoiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-search"></i> بحث برقم الفاتورة</div>
+                <div class="modal-close" onclick="closeModal('searchInvoiceModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">أدخل رقم الفاتورة</label>
+                    <input type="text" class="form-control" id="invoiceSearchNumber" placeholder="مثال: LVN-20260213-042">
+                </div>
+                <button class="btn btn-primary" style="width:100%; margin-bottom: 16px;" onclick="findInvoiceByNumber()">بحث</button>
+                <div id="invoiceSearchResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فاتورة شهرية -->
+    <div class="modal" id="monthlyInvoiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-calendar-alt"></i> فاتورة شهرية</div>
+                <div class="modal-close" onclick="closeModal('monthlyInvoiceModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">اختر العميلة</label>
+                    <select class="form-control" id="monthlyCustomerSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الشهر</label>
+                    <input type="month" class="form-control" id="monthlyMonth" value="${new Date().toISOString().slice(0,7)}">
+                </div>
+                <button class="btn btn-primary" style="width:100%;" onclick="generateMonthlyInvoice()">إنشاء الفاتورة</button>
+                <div id="monthlyInvoiceResult" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== مودالات الإعدادات ========== -->
+
+    <div class="modal" id="settingsGeneral">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title"><i class="fas fa-sliders-h"></i> الإعدادات العامة</div><div class="modal-close" onclick="closeModal('settingsGeneral')">&times;</div></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">الوضع الليلي</label><select class="form-control" id="darkMode"><option value="auto">تلقائي</option><option value="light">فاتح</option><option value="dark">داكن</option></select></div>
+                <div class="form-group"><label class="form-label">اللغة</label><select class="form-control" id="appLanguage"><option value="ar">العربية</option><option value="en">English</option></select></div>
+                <button class="btn btn-primary" style="width:100%;" onclick="saveGeneral()">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsCountryCode">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title"><i class="fas fa-globe"></i> رمز الدولة</div><div class="modal-close" onclick="closeModal('settingsCountryCode')">&times;</div></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">اختر رمز الدولة</label><select class="form-control" id="countryCodeSelect"><option value="967">967 (اليمن)</option><option value="966">966 (السعودية)</option><option value="965">965 (الكويت)</option><option value="971">971 (الإمارات)</option><option value="other">إدخال يدوي</option></select></div>
+                <div id="customCountryCodeDiv" style="display:none;"><label class="form-label">رمز مخصص</label><input class="form-control" id="customCountryCode"></div>
+                <div style="margin-top:16px;"><label class="form-label">عند الإرسال</label><div style="display:flex; gap:20px;"><label><input type="radio" name="codeBehavior" value="prepend" checked> إضافة الرمز تلقائياً</label><label><input type="radio" name="codeBehavior" value="asis"> استخدم الرقم كما هو</label></div></div>
+                <button class="btn btn-primary" style="width:100%; margin-top:24px;" onclick="saveCountryCode()">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsTemplates">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title"><i class="fas fa-file-alt"></i> قالب الرسالة</div><div class="modal-close" onclick="closeModal('settingsTemplates')">&times;</div></div>
+            <div class="modal-body">
+                <textarea class="form-control" id="whatsappTemplate" rows="12" style="resize:vertical;">أهلاً جميلة لورڤين: {firstName} .. ✨
+
+تم تسجيل طلبكِ بنجاح، ونحنُ بكل حُب نجهز تفاصيله الآن 🌸
+
+🆔 *رقم الطلب :* #{orderId}
+📅 *تاريخ الجمال :* {formattedDate}
+🛍️ *مقتنياتكِ :*
+{items}
+
+✨ *قيمة الجمال :* {total} ريال
+
+ممتنين لاختياركِ لورڤين ليكون جزءاً من جمالك .. 🤍</textarea>
+                <button class="btn btn-primary" style="width:100%; margin-top:24px;" onclick="saveTemplate()">حفظ القالب</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsBackup">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title"><i class="fas fa-cloud-upload-alt"></i> النسخ الاحتياطي</div><div class="modal-close" onclick="closeModal('settingsBackup')">&times;</div></div>
+            <div class="modal-body text-center">
+                <i class="fas fa-database" style="font-size:52px; color:var(--accent-1); margin-bottom:20px;"></i>
+                <button class="btn btn-primary" style="width:100%; margin-bottom:12px;" onclick="exportBackup()"><i class="fas fa-download"></i> تصدير نسخة</button>
+                <button class="btn btn-outline" style="width:100%;" onclick="document.getElementById('importFile').click()"><i class="fas fa-upload"></i> استيراد نسخة</button>
+                <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importBackup(event)">
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsAds">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title"><i class="fas fa-bullhorn"></i> نظام الإعلانات</div><div class="modal-close" onclick="closeModal('settingsAds')">&times;</div></div>
+            <div class="modal-body">
+                <p style="margin-bottom:20px;">إرسال عروض ورسائل تسويقية عبر واتساب إلى جميع العميلات المسجلات.</p>
+                <div class="form-group"><label class="form-label">نص الإعلان</label><textarea class="form-control" id="adMessage" rows="6"></textarea></div>
+                <button class="btn btn-primary" style="width:100%;" onclick="sendAds()"><i class="fab fa-whatsapp"></i> إرسال للجميع</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsCustomize">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title"><i class="fas fa-paint-brush"></i> تخصيص التطبيق</div><div class="modal-close" onclick="closeModal('settingsCustomize')">&times;</div></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">اسم المتجر</label><input class="form-control" id="storeName" value="LORVEN"></div>
+                <div class="form-group"><label class="form-label">رابط الشعار (اختياري)</label><input class="form-control" id="logoUrl" placeholder="https://example.com/logo.png"></div>
+                <button class="btn btn-primary" style="width:100%;" onclick="saveCustomization()">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsSecurity">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title"><i class="fas fa-shield-alt"></i> الأمان والخصوصية</div><div class="modal-close" onclick="closeModal('settingsSecurity')">&times;</div></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">تفعيل قفل التطبيق</label><select class="form-control" id="appLock"><option value="off">غير مفعل</option><option value="pin">رمز PIN</option><option value="fingerprint">بصمة الإصبع</option></select></div>
+                <div id="pinField" style="display:none;"><label class="form-label">أدخل رمز PIN</label><input type="password" class="form-control" id="pinCode" maxlength="4"></div>
+                <button class="btn btn-primary" style="width:100%; margin-top:24px;" onclick="saveSecurity()">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== لورڤين 5.0 – الكود الأساسي ==========
+
+        // ---------- البيانات والإعدادات ----------
+        let products = [];
+        let invoices = [];
+        let customersDB = [];
+        let settings = {
+            countryCode: '967',
+            codeBehavior: 'prepend',
+            whatsappTemplate: `أهلاً جميلة لورڤين: {firstName} .. ✨\n\nتم تسجيل طلبكِ بنجاح، ونحنُ بكل حُب نجهز تفاصيله الآن 🌸\n\n🆔 *رقم الطلب :* #{orderId}\n📅 *تاريخ الجمال :* {formattedDate}\n🛍️ *مقتنياتكِ :*\n{items}\n\n✨ *قيمة الجمال :* {total} ريال\n\nممتنين لاختياركِ لورڤين ليكون جزءاً من جمالك .. 🤍`,
+            storeName: 'LORVEN',
+            logo: '',
+            darkMode: 'auto',
+            language: 'ar',
+            appLock: 'off',
+            pinCode: ''
+        };
+        let invoiceItems = [];
+        let currentPage = 'dashboard';
+
+        // ---------- تحميل / حفظ البيانات ----------
+        function loadData() {
+            try {
+                const savedProducts = localStorage.getItem('lorven_products');
+                if (savedProducts) products = JSON.parse(savedProducts);
+                else {
+                    // منتجات افتراضية – بدون إيموجيات، أيقونات فونتواز
+                    products = [
+                        { id: 1, name: 'سيروم فيتامين سي المركز', barcode: '6291100123456', price: 189, cost: 78, stock: 42, category: 'عناية بالبشرة', icon: 'fa-flask' },
+                        { id: 2, name: 'كريم تفتيح الوجه بالكولاجين', barcode: '6291100123457', price: 145, cost: 52, stock: 36, category: 'عناية بالبشرة', icon: 'fa-spa' },
+                        { id: 3, name: 'ماسك الذهب للوجه 24k', barcode: '6291100123458', price: 220, cost: 95, stock: 18, category: 'عناية بالبشرة', icon: 'fa-crown' },
+                        { id: 4, name: 'أحمر شفاه مات طويل الأمد', barcode: '6291100123459', price: 79, cost: 24, stock: 84, category: 'مكياج', icon: 'fa-paint-brush' },
+                        { id: 5, name: 'كحل سائل مقاوم للماء', barcode: '6291100123460', price: 59, cost: 19, stock: 112, category: 'مكياج', icon: 'fa-eye' },
+                    ];
+                }
+                const savedInvoices = localStorage.getItem('lorven_invoices');
+                invoices = savedInvoices ? JSON.parse(savedInvoices) : [];
+                const savedSettings = localStorage.getItem('lorven_settings');
+                if (savedSettings) settings = { ...settings, ...JSON.parse(savedSettings) };
+                updateCustomersDB();
+            } catch (e) { console.warn(e); }
+        }
+        function saveProducts() { localStorage.setItem('lorven_products', JSON.stringify(products)); }
+        function saveInvoices() { localStorage.setItem('lorven_invoices', JSON.stringify(invoices)); }
+        function saveSettings() { localStorage.setItem('lorven_settings', JSON.stringify(settings)); }
+        function updateCustomersDB() {
+            customersDB = [...new Map(invoices.map(inv => [inv.customerPhone, { name: inv.customerName, phone: inv.customerPhone }])).values()];
+        }
+
+        // ---------- أدوات مساعدة ----------
+        function showToast(msg, icon = '🌸') {
+            const t = document.getElementById('toast');
+            t.innerHTML = `${icon} ${msg}`;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        // تحديث الوقت (بدون أيقونات)
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('liveTime').innerHTML = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        }
+        setInterval(updateTime, 1000);
+
+        // توليد باركود تلقائي (تسلسلي)
+        function generateBarcode() {
+            let max = 6291100000000;
+            products.forEach(p => { if (parseInt(p.barcode) > max) max = parseInt(p.barcode); });
+            return (max + 1).toString();
+        }
+
+        // ---------- إدارة الصفحات ----------
+        const pages = {
+            dashboard: { title: 'الرئيسية', showBack: false },
+            products: { title: 'المنتجات', showBack: true },
+            invoices: { title: 'فاتورة جديدة', showBack: true },
+            reports: { title: 'التقارير', showBack: true },
+            settings: { title: 'الإعدادات', showBack: true },
+            history: { title: 'سجل الفواتير', showBack: true }
+        };
+
+        function switchPage(page) {
+            currentPage = page;
+            // الهيدر
+            const header = document.getElementById('dynamicHeader');
+            const pageInfo = pages[page] || { title: 'لورڤين', showBack: true };
+            header.innerHTML = `
+                ${pageInfo.showBack ? '<div class="back-btn" onclick="goBack()"><i class="fas fa-chevron-right"></i></div>' : ''}
+                <div class="page-title">${pageInfo.title}</div>
+                ${page === 'dashboard' ? `<div class="notification-badge" onclick="switchPage('history')"><i class="fas fa-bell" style="color: var(--accent-1);"></i><span style="background: var(--accent-1); color: white; padding: 4px 10px; border-radius: 30px; font-size: 14px;">${invoices.length}</span></div>` : ''}
+            `;
+            // المحتوى
+            renderPage(page);
+            // تفعيل القائمة
+            const navOrder = ['dashboard','products','invoices','reports','settings'];
+            document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', navOrder[i] === page);
+            });
+        }
+        function goBack() { switchPage('dashboard'); }
+
+        function renderPage(page) {
+            const container = document.getElementById('mainContent');
+            if (page === 'dashboard') renderDashboard(container);
+            else if (page === 'products') renderProductsPage(container);
+            else if (page === 'invoices') renderInvoicesPage(container);
+            else if (page === 'reports') renderReportsPage(container);
+            else if (page === 'settings') renderSettingsPage(container);
+            else if (page === 'history') renderHistoryPage(container);
+        }
+
+        // ---------- الرئيسية (مع بطاقات إحصاءات كاملة التلوين) ----------
+        function renderDashboard(container) {
+            const today = new Date().toDateString();
+            const todayInvoices = invoices.filter(inv => new Date(inv.date).toDateString() === today);
+            const salesToday = todayInvoices.reduce((s,i) => s + i.total, 0);
+            const profitToday = todayInvoices.reduce((s,i) => s + (i.profit || 0), 0);
+            const ordersToday = todayInvoices.length;
+            const customersCount = customersDB.length;
+
+            let html = `
+                <div style="display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 24px;">
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-coins"></i></div><div class="stat-value">${salesToday}</div><div class="stat-label">مبيعات اليوم</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-value">${profitToday}</div><div class="stat-label">صافي الربح</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-shopping-bag"></i></div><div class="stat-value">${ordersToday}</div><div class="stat-label">طلبات اليوم</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-value">${customersCount}</div><div class="stat-label">عملاء جدد</div></div>
+                </div>
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="font-size: 20px; font-weight: 700;"><i class="fas fa-bolt" style="color: var(--accent-1);"></i> إجراءات سريعة</h3>
+                        <span style="display: flex; gap: 12px;">
+                            <button class="btn btn-outline" style="padding: 12px 16px;" onclick="openModal('searchInvoiceModal')"><i class="fas fa-search"></i> بحث برقم</button>
+                            <button class="btn btn-outline" style="padding: 12px 16px;" onclick="openModal('monthlyInvoiceModal')"><i class="fas fa-calendar-alt"></i> فاتورة شهرية</button>
+                        </span>
+                    </div>
+                    <div class="actions-grid">
+                        <div class="action-item" onclick="switchPage('invoices')"><div class="action-icon"><i class="fas fa-plus"></i></div><span class="action-label">فاتورة</span></div>
+                        <div class="action-item" onclick="openModal('importModal')"><div class="action-icon"><i class="fas fa-file-import"></i></div><span class="action-label">استيراد</span></div>
+                        <div class="action-item" onclick="switchPage('products')"><div class="action-icon"><i class="fas fa-box"></i></div><span class="action-label">منتجات</span></div>
+                        <div class="action-item" onclick="switchPage('reports')"><div class="action-icon"><i class="fas fa-chart-pie"></i></div><span class="action-label">تقارير</span></div>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;"><i class="fas fa-clock" style="color: var(--accent-2);"></i> آخر الفواتير</h3>
+                    <div style="background: white; border-radius: 28px; border: 1px solid var(--gray-100); overflow: hidden;">
+            `;
+            const recent = invoices.slice(-5).reverse();
+            if (recent.length === 0) html += '<div style="padding: 24px; text-align: center; color: var(--gray-500);">لا توجد فواتير بعد</div>';
+            else {
+                recent.forEach(inv => {
+                    html += `<div style="display: flex; align-items: center; padding: 18px; border-bottom: 1px solid var(--gray-100); cursor: pointer;" onclick="viewInvoiceDetails('${inv.number}')">
+                                <div style="width: 48px; height: 48px; background: rgba(255,138,156,0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-left: 16px;"><i class="fas fa-receipt" style="color: var(--accent-1);"></i></div>
+                                <div style="flex:1;"><div style="font-weight: 700;">${inv.number}</div><div style="font-size: 13px; color: var(--gray-500);">${new Date(inv.date).toLocaleDateString('ar-SA')} · ${inv.customerName || 'عميلة'}</div></div>
+                                <div style="font-weight: 700; color: var(--accent-1);">${inv.total} ر.س</div>
+                            </div>`;
+                });
+            }
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        // ---------- صفحة المنتجات (بدون تكرار عنوان) ----------
+        function renderProductsPage(container) {
+            let html = `
+                <div class="products-header">
+                    <div class="products-title">المنتجات</div>
+                    <div class="products-actions">
+                        <button onclick="openBarcodeScanner()" title="مسح باركود"><i class="fas fa-camera"></i></button>
+                        <button onclick="openModal('addProductModal')"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+                <div style="position: relative; margin-bottom: 20px;">
+                    <input type="text" class="form-control" id="productSearchInput" placeholder="ابحث بالاسم أو الباركود..." style="padding-left: 50px;" autocomplete="off">
+                    <i class="fas fa-search" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--gray-500);"></i>
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+                <div class="products-grid-container" id="productsGridContainer">
+                    <div class="products-grid" id="productsGrid"></div>
+                </div>
+            `;
+            container.innerHTML = html;
+            renderProductsGrid();
+            setupProductsSearch();
+        }
+
+        function renderProductsGrid(filter = '') {
+            const grid = document.getElementById('productsGrid');
+            if (!grid) return;
+            let filtered = filter ? products.filter(p => p.name.includes(filter) || p.barcode.includes(filter)) : products;
+            grid.innerHTML = '';
+            if (filtered.length === 0) { grid.innerHTML = '<div style="grid-column: span 2; text-align: center; padding: 40px;">لا توجد منتجات</div>'; return; }
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-icon"><i class="fas ${p.icon || 'fa-box'}"></i></div>
+                    <div style="font-weight: 700; font-size: 16px; margin-bottom: 6px;">${escapeHTML(p.name)}</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--accent-1); margin-bottom: 8px;">${p.price} ر.س</div>
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--gray-500); margin-bottom: 16px;">
+                        <span>${p.barcode.slice(-6)}</span><span>مخزون: ${p.stock}</span>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-outline" style="flex:1; padding: 12px;" onclick="editProduct(${p.id}); return false;"><i class="fas fa-edit"></i> تعديل</button>
+                        <button class="btn btn-primary" style="flex:1; padding: 12px;" onclick="addToInvoice(${p.id}); return false;"><i class="fas fa-cart-plus"></i></button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function escapeHTML(str) { return String(str).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
+
+        function setupProductsSearch() {
+            const input = document.getElementById('productSearchInput');
+            const resultsDiv = document.getElementById('searchResults');
+            let timeout;
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                const q = this.value.trim();
+                if (q.length < 2) { resultsDiv.style.display = 'none'; renderProductsGrid(''); return; }
+                timeout = setTimeout(() => {
+                    const filtered = products.filter(p => p.name.includes(q) || p.barcode.includes(q)).slice(0,5);
+                    resultsDiv.innerHTML = '';
+                    if (filtered.length === 0) resultsDiv.innerHTML = '<div style="padding:20px; text-align:center;">لا توجد نتائج</div>';
+                    else {
+                        filtered.forEach(p => {
+                            const item = document.createElement('div');
+                            item.className = 'search-result-item';
+                            item.innerHTML = `<div style="width:40px; height:40px; background:var(--gradient); border-radius:14px; display:flex; align-items:center; justify-content:center; color:white; margin-left:16px;"><i class="fas ${p.icon || 'fa-box'}"></i></div>
+                                              <div style="flex:1;"><div style="font-weight:600;">${p.name}</div><div style="font-size:12px;">${p.barcode}</div></div>
+                                              <div style="font-weight:700; color:var(--accent-1);">${p.price} ر.س</div>`;
+                            item.onclick = () => { addToInvoice(p.id); input.value = ''; resultsDiv.style.display = 'none'; renderProductsGrid(''); };
+                            resultsDiv.appendChild(item);
+                        });
+                    }
+                    resultsDiv.style.display = 'block';
+                    renderProductsGrid(q);
+                }, 400);
+            });
+            document.addEventListener('click', e => { if (!input.contains(e.target) && !resultsDiv.contains(e.target)) resultsDiv.style.display = 'none'; });
+        }
+
+        // ---------- كاميرا مع طلب الإذن ----------
+        async function openBarcodeScanner() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                stream.getTracks().forEach(t => t.stop());
+                const codeReader = new ZXing.BrowserMultiFormatReader();
+                codeReader.decodeOnceFromVideoDevice(undefined, 'video').then(result => {
+                    const barcode = result.text;
+                    showToast('تم المسح: ' + barcode, '📷');
+                    const product = products.find(p => p.barcode === barcode);
+                    if (product) addToInvoice(product.id);
+                    else if (confirm('المنتج غير موجود. هل تريد إضافته الآن؟')) {
+                        openModal('addProductModal');
+                        document.getElementById('newProductBarcode').value = barcode;
+                    }
+                    codeReader.reset();
+                }).catch(() => { alert('فشل قراءة الباركود'); codeReader.reset(); });
+            } catch { alert('لا يمكن الوصول إلى الكاميرا. تأكد من منح الإذن.'); }
+        }
+
+        // ---------- صفحة الفاتورة (ثابتة لا تغيير) ----------
+        function renderInvoicesPage(container) {
+            container.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <div class="customer-card">
+                        <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+                            <i class="fas fa-user" style="width:48px; height:48px; background:rgba(255,138,156,0.1); border-radius:18px; display:flex; align-items:center; justify-content:center; color:var(--accent-1); font-size:22px;"></i>
+                            <span style="font-weight:700; font-size:18px;">معلومات العميلة</span>
+                        </div>
+                        <div class="form-group" style="position:relative;">
+                            <label class="form-label">الاسم</label>
+                            <input type="text" class="form-control" id="customerName" placeholder="اسم العميلة" autocomplete="off">
+                            <div id="customerDatalist" class="datalist-customers"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">رقم الجوال</label>
+                            <input type="tel" class="form-control" id="customerPhone" placeholder="771234567">
+                        </div>
+                    </div>
+                    <div class="products-card">
+                        <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+                            <i class="fas fa-box" style="width:48px; height:48px; background:rgba(255,138,156,0.1); border-radius:18px; display:flex; align-items:center; justify-content:center; color:var(--accent-1); font-size:22px;"></i>
+                            <span style="font-weight:700; font-size:18px;">المنتجات</span>
+                        </div>
+                        <div style="position:relative; margin-bottom:20px;">
+                            <input type="text" class="form-control" id="invoiceProductSearch" placeholder="ابحث عن منتج..." style="padding-left:50px;">
+                            <i class="fas fa-search" style="position:absolute; left:20px; top:50%; transform:translateY(-50%); color:var(--gray-500);"></i>
+                            <div class="search-results" id="invoiceSearchResults"></div>
+                        </div>
+                        <div id="invoiceItemsList" style="max-height:220px; overflow-y:auto;"></div>
+                    </div>
+                    <div class="summary-card">
+                        <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+                            <i class="fas fa-calculator" style="width:48px; height:48px; background:rgba(255,138,156,0.1); border-radius:18px; display:flex; align-items:center; justify-content:center; color:var(--accent-1); font-size:22px;"></i>
+                            <span style="font-weight:700; font-size:18px;">ملخص الفاتورة</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding:12px 0;"><span>إجمالي المنتجات</span><span id="subtotal" style="font-weight:600;">0 ر.س</span></div>
+                        <div style="display:flex; justify-content:space-between; padding:12px 0;"><span>التوصيل</span><span><input type="number" id="deliveryCost" value="0" min="0" style="width:80px; padding:10px; border:1px solid var(--gray-200); border-radius:30px; text-align:center;"> ر.س</span></div>
+                        <div style="display:flex; justify-content:space-between; padding:12px 0;"><span>الربح الصافي</span><span id="profit" style="color:var(--success); font-weight:700;">0 ر.س</span></div>
+                        <div style="border-top:1px solid var(--gray-100); margin:16px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; font-size:22px; font-weight:700;"><span>الإجمالي</span><span id="total" style="color:var(--accent-1);">0 ر.س</span></div>
+                    </div>
+                    <div style="display:flex; gap:12px; margin-bottom:8px;">
+                        <button class="btn btn-wa" style="flex:1;" onclick="openWhatsAppModal()"><i class="fab fa-whatsapp"></i> واتساب</button>
+                        <button class="btn btn-primary" style="flex:1;" onclick="saveInvoice()"><i class="fas fa-save"></i> حفظ</button>
+                        <button class="btn btn-outline" style="flex:1;" onclick="printInvoice()"><i class="fas fa-print"></i> طباعة</button>
+                    </div>
+                    <div style="text-align:center; font-size:14px; color:var(--gray-500);">رقم الفاتورة: <span id="invoiceNumber" style="font-weight:700; color:var(--accent-1);">LVN-${new Date().getFullYear()}${(new Date().getMonth()+1).toString().padStart(2,'0')}${new Date().getDate().toString().padStart(2,'0')}-001</span></div>
+                </div>
+            `;
+            generateInvoiceNumber();
+            updateInvoiceSummary();
+            setupInvoiceSearch();
+            setupCustomerAutocomplete();
+        }
+
+        // بحث الفاتورة (قائمة منسدلة)
+        function setupInvoiceSearch() {
+            const input = document.getElementById('invoiceProductSearch');
+            const results = document.getElementById('invoiceSearchResults');
+            let timeout;
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                const q = this.value.trim();
+                if (q.length < 2) { results.style.display = 'none'; return; }
+                timeout = setTimeout(() => {
+                    const filtered = products.filter(p => p.name.includes(q) || p.barcode.includes(q)).slice(0,5);
+                    results.innerHTML = '';
+                    if (filtered.length === 0) results.innerHTML = '<div style="padding:20px; text-align:center;">لا توجد نتائج</div>';
+                    else {
+                        filtered.forEach(p => {
+                            const item = document.createElement('div');
+                            item.className = 'search-result-item';
+                            item.innerHTML = `<div style="width:40px; height:40px; background:var(--gradient); border-radius:14px; display:flex; align-items:center; justify-content:center; color:white; margin-left:16px;"><i class="fas ${p.icon || 'fa-box'}"></i></div>
+                                              <div style="flex:1;"><div style="font-weight:600;">${p.name}</div><div style="font-size:12px;">${p.price} ر.س</div></div>`;
+                            item.onclick = () => { addToInvoice(p.id); input.value = ''; results.style.display = 'none'; };
+                            results.appendChild(item);
+                        });
+                    }
+                    results.style.display = 'block';
+                }, 400);
+            });
+            document.addEventListener('click', e => { if (!input.contains(e.target) && !results.contains(e.target)) results.style.display = 'none'; });
+        }
+
+        // اقتراح العملاء
+        function setupCustomerAutocomplete() {
+            const input = document.getElementById('customerName');
+            const list = document.getElementById('customerDatalist');
+            input.addEventListener('input', function() {
+                const val = this.value.trim();
+                if (val.length < 1) { list.style.display = 'none'; return; }
+                const matches = customersDB.filter(c => c.name && c.name.includes(val)).slice(0,5);
+                if (matches.length) {
+                    list.innerHTML = matches.map(c => `<div class="datalist-item" data-phone="${c.phone}">${c.name} - ${c.phone}</div>`).join('');
+                    list.style.display = 'block';
+                    list.querySelectorAll('.datalist-item').forEach(el => {
+                        el.onclick = () => {
+                            input.value = el.textContent.split(' - ')[0];
+                            document.getElementById('customerPhone').value = el.dataset.phone;
+                            list.style.display = 'none';
+                        };
+                    });
+                } else list.style.display = 'none';
+            });
+            document.addEventListener('click', e => { if (!input.contains(e.target) && !list.contains(e.target)) list.style.display = 'none'; });
+        }
+
+        // إضافة منتج للفاتورة
+        function addToInvoice(productId) {
+            const p = products.find(p => p.id === productId);
+            if (!p) return;
+            if (currentPage !== 'invoices') switchPage('invoices');
+            const existing = invoiceItems.find(i => i.id === productId);
+            if (existing) existing.quantity += 1;
+            else invoiceItems.push({ ...p, quantity: 1 });
+            renderInvoiceItems();
+            updateInvoiceSummary();
+            showToast('أضيف للمشتريات', '🛍️');
+        }
+
+        function renderInvoiceItems() {
+            const container = document.getElementById('invoiceItemsList');
+            if (!container) return;
+            if (invoiceItems.length === 0) { container.innerHTML = '<div style="text-align:center; padding:32px; color:var(--gray-500);"><i class="fas fa-shopping-cart" style="font-size:40px; margin-bottom:12px;"></i><p>لم تُضف منتجات بعد</p></div>'; return; }
+            container.innerHTML = '';
+            invoiceItems.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'invoice-item';
+                div.innerHTML = `
+                    <div style="flex:1;"><div style="font-weight:700;">${escapeHTML(item.name)}</div><div style="font-size:13px; color:var(--gray-500);">${item.price} ر.س</div></div>
+                    <div style="display:flex; align-items:center; gap:12px; background:white; padding:8px 16px; border-radius:40px; box-shadow:var(--shadow-sm);">
+                        <button onclick="changeQuantity(${idx}, -1); return false;" style="width:32px; height:32px; border-radius:50%; border:none; background:var(--gradient); color:white; font-weight:700; cursor:pointer;">-</button>
+                        <span style="min-width:28px; text-align:center; font-weight:600;">${item.quantity}</span>
+                        <button onclick="changeQuantity(${idx}, 1); return false;" style="width:32px; height:32px; border-radius:50%; border:none; background:var(--gradient); color:white; font-weight:700; cursor:pointer;">+</button>
+                    </div>
+                    <div style="font-weight:700; color:var(--accent-1); margin-right:16px;">${item.price * item.quantity} ر.س</div>
+                    <div onclick="removeInvoiceItem(${idx}); return false;" style="color:var(--danger); margin-right:8px; font-size:20px; cursor:pointer;"><i class="fas fa-trash"></i></div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function changeQuantity(idx, delta) { if (invoiceItems[idx]) { invoiceItems[idx].quantity = Math.max(1, invoiceItems[idx].quantity + delta); renderInvoiceItems(); updateInvoiceSummary(); } }
+        function removeInvoiceItem(idx) { invoiceItems.splice(idx, 1); renderInvoiceItems(); updateInvoiceSummary(); showToast('تم الحذف', '🗑️'); }
+
+        function updateInvoiceSummary() {
+            const subtotal = invoiceItems.reduce((s,i) => s + i.price * i.quantity, 0);
+            const delivery = parseFloat(document.getElementById('deliveryCost')?.value || 0);
+            const profit = invoiceItems.reduce((s,i) => s + (i.price - i.cost) * i.quantity, 0) - delivery;
+            const total = subtotal + delivery;
+            if (document.getElementById('subtotal')) document.getElementById('subtotal').innerText = subtotal + ' ر.س';
+            if (document.getElementById('profit')) document.getElementById('profit').innerText = profit + ' ر.س';
+            if (document.getElementById('total')) document.getElementById('total').innerText = total + ' ر.س';
+        }
+
+        function generateInvoiceNumber() {
+            const now = new Date();
+            const num = `LVN-${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${Math.floor(Math.random()*1000).toString().padStart(3,'0')}`;
+            const el = document.getElementById('invoiceNumber');
+            if (el) el.innerText = num;
+        }
+
+        // ---------- واتساب مع حفظ تلقائي ----------
+        function openWhatsAppModal() {
+            if (invoiceItems.length === 0) { alert('أضيفي منتجات أولاً'); return; }
+            document.getElementById('whatsappPhoneNumber').value = document.getElementById('customerPhone').value;
+            document.getElementById('whatsappPreview').innerText = buildWhatsAppMessage();
+            openModal('whatsappModal');
+        }
+
+        function buildWhatsAppMessage() {
+            const firstName = document.getElementById('customerName').value || 'عميلة';
+            const orderId = document.getElementById('invoiceNumber').innerText.replace('LVN-', '');
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('ar-SA') + ' ' + now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            let itemsText = '';
+            invoiceItems.forEach(i => { itemsText += `   • ${i.name} (${i.quantity} × ${i.price}) = ${i.quantity * i.price} ريال\n`; });
+            const total = invoiceItems.reduce((s,i) => s + i.price * i.quantity, 0) + parseFloat(document.getElementById('deliveryCost')?.value || 0);
+            return settings.whatsappTemplate
+                .replace(/{firstName}/g, firstName)
+                .replace(/{orderId}/g, orderId)
+                .replace(/{formattedDate}/g, formattedDate)
+                .replace(/{items}/g, itemsText)
+                .replace(/{total}/g, total);
+        }
+
+        function sendWhatsApp() {
+            let phone = document.getElementById('whatsappPhoneNumber').value.replace(/\D/g, '');
+            if (!phone) { alert('أدخلي رقم الجوال'); return; }
+            if (settings.codeBehavior === 'prepend') {
+                if (phone.startsWith('0')) phone = phone.substring(1);
+                phone = settings.countryCode + phone;
+            }
+            // حفظ الفاتورة تلقائياً قبل الإرسال
+            if (invoiceItems.length > 0) autoSaveInvoice();
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildWhatsAppMessage())}`;
+            window.open(url, '_blank');
+            closeModal('whatsappModal');
+            showToast('تم فتح واتساب والفاتورة محفوظة', '📨');
+        }
+
+        // حفظ تلقائي بدون إزعاج
+        function autoSaveInvoice() {
+            if (invoiceItems.length === 0) return;
+            const invoice = {
+                number: document.getElementById('invoiceNumber').innerText,
+                date: new Date().toISOString(),
+                customerName: document.getElementById('customerName').value || 'عميلة',
+                customerPhone: document.getElementById('customerPhone').value,
+                items: invoiceItems.map(i => ({ ...i })),
+                subtotal: parseFloat(document.getElementById('subtotal').innerText.replace(/[^\d]/g, '')),
+                delivery: parseFloat(document.getElementById('deliveryCost').value || 0),
+                profit: parseFloat(document.getElementById('profit').innerText.replace(/[^\d]/g, '')),
+                total: parseFloat(document.getElementById('total').innerText.replace(/[^\d]/g, ''))
+            };
+            invoices.push(invoice);
+            saveInvoices();
+            updateCustomersDB();
+            // لا نفرغ العناصر – نتركها للمستخدم
+        }
+
+        // حفظ يدوي
+        function saveInvoice() {
+            if (invoiceItems.length === 0) { alert('الفاتورة فارغة'); return; }
+            const invoice = {
+                number: document.getElementById('invoiceNumber').innerText,
+                date: new Date().toISOString(),
+                customerName: document.getElementById('customerName').value || 'عميلة',
+                customerPhone: document.getElementById('customerPhone').value,
+                items: invoiceItems.map(i => ({ ...i })),
+                subtotal: parseFloat(document.getElementById('subtotal').innerText.replace(/[^\d]/g, '')),
+                delivery: parseFloat(document.getElementById('deliveryCost').value || 0),
+                profit: parseFloat(document.getElementById('profit').innerText.replace(/[^\d]/g, '')),
+                total: parseFloat(document.getElementById('total').innerText.replace(/[^\d]/g, ''))
+            };
+            invoices.push(invoice);
+            saveInvoices();
+            updateCustomersDB();
+            showToast('تم حفظ الفاتورة', '💾');
+            // تفريغ الفاتورة بعد الحفظ اليدوي
+            invoiceItems = [];
+            renderInvoiceItems();
+            updateInvoiceSummary();
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('deliveryCost').value = 0;
+            generateInvoiceNumber();
+            if (currentPage === 'dashboard') renderDashboard(document.getElementById('mainContent'));
+        }
+
+        // ---------- طباعة PDF ----------
+        function printInvoice() {
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html dir="rtl"><head><meta charset="UTF-8"><title>فاتورة لورڤين</title>
+                <style>
+                    body { font-family: 'IBM Plex Sans Arabic', sans-serif; padding: 30px; background: #fff; color: #2C3A4F; } 
+                    .invoice { max-width: 600px; margin: auto; border: 1px solid #E0D6D0; border-radius: 28px; padding: 30px; box-shadow: 0 12px 24px rgba(0,0,0,0.04); }
+                    .header { display: flex; justify-content: space-between; align-items: center; }
+                    .logo { font-size: 28px; font-weight: 700; background: linear-gradient(145deg, #FF8A9C, #A7C7E7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                    th { border-bottom: 2px solid #FF8A9C; padding: 12px 0; text-align: right; }
+                    td { padding: 12px 0; border-bottom: 1px solid #F0EBE8; }
+                    .total { font-size: 22px; font-weight: 700; color: #FF8A9C; text-align: left; margin-top: 20px; }
+                </style></head>
+                <body>
+                    <div class="invoice">
+                        <div class="header"><span class="logo">${settings.storeName}</span><span>فاتورة</span></div>
+                        <p style="color: #8F8A88;">رقم: ${document.getElementById('invoiceNumber').innerText}</p>
+                        <p>العميلة: ${document.getElementById('customerName').value || 'عميلة'}</p>
+                        <table>
+                            <tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr>
+                            ${invoiceItems.map(i => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>${i.price}</td><td>${i.quantity * i.price}</td></tr>`).join('')}
+                        </table>
+                        <div style="display: flex; justify-content: space-between;"><span>التوصيل:</span><span>${document.getElementById('deliveryCost').value || 0} ر.س</span></div>
+                        <div class="total">الإجمالي: ${document.getElementById('total').innerText}</div>
+                        <p style="margin-top: 40px; text-align: center; color: #FF8A9C;">ممتنين لاختياركِ لورڤين 🤍</p>
+                    </div>
+                </body></html>
+            `);
+            win.document.close();
+            win.print();
+        }
+
+        // ---------- إدارة المنتجات ----------
+        function addNewProduct() {
+            const name = document.getElementById('newProductName').value;
+            let barcode = document.getElementById('newProductBarcode').value;
+            if (!barcode) barcode = generateBarcode();
+            const price = parseFloat(document.getElementById('newProductPrice').value);
+            const cost = parseFloat(document.getElementById('newProductCost').value) || 0;
+            const stock = parseInt(document.getElementById('newProductStock').value) || 0;
+            const category = document.getElementById('newProductCategory').value;
+            if (!name || !barcode || isNaN(price)) { alert('الرجاء ملء الحقول الأساسية'); return; }
+            const newId = products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
+            products.unshift({ id: newId, name, barcode, price, cost, stock, category, icon: 'fa-box' });
+            saveProducts();
+            closeModal('addProductModal');
+            renderProductsGrid();
+            showToast('تمت إضافة المنتج', '✅');
+            ['newProductName','newProductBarcode','newProductCost','newProductPrice','newProductStock'].forEach(id => document.getElementById(id).value = '');
+        }
+
+        function editProduct(id) {
+            const p = products.find(p => p.id === id);
+            if (!p) return;
+            document.getElementById('editProductId').value = p.id;
+            document.getElementById('editProductName').value = p.name;
+            document.getElementById('editProductBarcode').value = p.barcode;
+            document.getElementById('editProductPrice').value = p.price;
+            document.getElementById('editProductCost').value = p.cost;
+            document.getElementById('editProductStock').value = p.stock;
+            const catSelect = document.getElementById('editProductCategory');
+            catSelect.innerHTML = ['عناية بالبشرة','مكياج','عناية بالشعر','عطور','منتجات طبيعية'].map(c => `<option ${c === p.category ? 'selected' : ''}>${c}</option>`).join('');
+            openModal('editProductModal');
+        }
+
+        function updateProduct() {
+            const id = parseInt(document.getElementById('editProductId').value);
+            const p = products.find(p => p.id === id);
+            if (p) {
+                p.name = document.getElementById('editProductName').value;
+                p.barcode = document.getElementById('editProductBarcode').value;
+                p.price = parseFloat(document.getElementById('editProductPrice').value);
+                p.cost = parseFloat(document.getElementById('editProductCost').value);
+                p.stock = parseInt(document.getElementById('editProductStock').value);
+                p.category = document.getElementById('editProductCategory').value;
+                saveProducts();
+                closeModal('editProductModal');
+                renderProductsGrid();
+                showToast('تم تحديث المنتج', '🔄');
+            }
+        }
+
+        function deleteProduct() {
+            if (!confirm('هل أنت متأكدة من حذف هذا المنتج؟')) return;
+            const id = parseInt(document.getElementById('editProductId').value);
+            products = products.filter(p => p.id !== id);
+            saveProducts();
+            closeModal('editProductModal');
+            renderProductsGrid();
+            showToast('تم حذف المنتج', '🗑️');
+        }
+
+        // ---------- حذف فاتورة ----------
+        function deleteInvoice(number) {
+            if (!confirm('هل أنت متأكدة من حذف هذه الفاتورة؟')) return;
+            invoices = invoices.filter(inv => inv.number !== number);
+            saveInvoices();
+            updateCustomersDB();
+            if (currentPage === 'history') renderHistoryPage(document.getElementById('mainContent'));
+            else if (currentPage === 'dashboard') renderDashboard(document.getElementById('mainContent'));
+            showToast('تم حذف الفاتورة', '🗑️');
+        }
+
+        // ---------- عرض تفاصيل الفاتورة ----------
+        function viewInvoiceDetails(number) {
+            const inv = invoices.find(i => i.number === number);
+            if (!inv) { alert('الفاتورة غير موجودة'); return; }
+            const itemsHtml = inv.items.map(i => `<div style="display:flex; justify-content:space-between; padding:8px 0;"><span>${i.name} (${i.quantity} × ${i.price})</span><span style="font-weight:600;">${i.quantity * i.price} ر.س</span></div>`).join('');
+            document.getElementById('invoiceDetailsContent').innerHTML = `
+                <h4 style="margin-bottom:16px;">${inv.number}</h4>
+                <p><strong>العميلة:</strong> ${inv.customerName || 'غير مسجل'}</p>
+                <p><strong>التاريخ:</strong> ${new Date(inv.date).toLocaleString('ar-SA')}</p>
+                <div style="border-top:1px solid var(--gray-100); margin:16px 0;"></div>
+                ${itemsHtml}
+                <div style="border-top:1px solid var(--gray-100); margin:16px 0;"></div>
+                <div style="display:flex; justify-content:space-between;"><span>التوصيل</span><span>${inv.delivery} ر.س</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:700; margin-top:12px;"><span>الإجمالي</span><span style="color:var(--accent-1);">${inv.total} ر.س</span></div>
+                <button class="btn btn-outline" style="width:100%; margin-top:24px;" onclick="closeModal('invoiceDetailsModal')">إغلاق</button>
+                <button class="btn btn-outline" style="width:100%; margin-top:12px; color:var(--danger); border-color:var(--danger);" onclick="deleteInvoice('${inv.number}'); closeModal('invoiceDetailsModal');">حذف الفاتورة</button>
+            `;
+            openModal('invoiceDetailsModal');
+        }
+
+        // ---------- البحث عن فاتورة برقم ----------
+        function findInvoiceByNumber() {
+            const num = document.getElementById('invoiceSearchNumber').value.trim();
+            if (!num) { alert('أدخل رقم الفاتورة'); return; }
+            const inv = invoices.find(i => i.number === num);
+            const resultDiv = document.getElementById('invoiceSearchResult');
+            if (!inv) resultDiv.innerHTML = '<p style="color:red; text-align:center;">لا توجد فاتورة بهذا الرقم</p>';
+            else {
+                resultDiv.innerHTML = `<div style="background:var(--gray-50); border-radius:24px; padding:20px; cursor:pointer;" onclick="viewInvoiceDetails('${inv.number}'); closeModal('searchInvoiceModal');">
+                    <p><strong>${inv.number}</strong></p>
+                    <p>العميلة: ${inv.customerName}</p>
+                    <p>التاريخ: ${new Date(inv.date).toLocaleDateString('ar-SA')}</p>
+                    <p style="color:var(--accent-1); font-weight:700;">الإجمالي: ${inv.total} ر.س</p>
+                </div>`;
+            }
+        }
+
+        // ---------- فاتورة شهرية ----------
+        function generateMonthlyInvoice() {
+            const customerSelect = document.getElementById('monthlyCustomerSelect');
+            const customerPhone = customerSelect.value;
+            const customerName = customerSelect.selectedOptions[0]?.text.split(' - ')[0] || '';
+            const month = document.getElementById('monthlyMonth').value;
+            if (!month || !customerPhone) { alert('اختر العميلة والشهر'); return; }
+            const [year, monthNum] = month.split('-');
+            const monthlyInvoices = invoices.filter(inv => 
+                inv.customerPhone === customerPhone && 
+                new Date(inv.date).getFullYear() == year && 
+                (new Date(inv.date).getMonth() + 1) == parseInt(monthNum)
+            );
+            if (monthlyInvoices.length === 0) { document.getElementById('monthlyInvoiceResult').innerHTML = '<p style="color:red;">لا توجد فواتير لهذا الشهر</p>'; return; }
+            let items = [];
+            monthlyInvoices.forEach(inv => inv.items.forEach(it => {
+                const found = items.find(i => i.id === it.id);
+                if (found) found.quantity += it.quantity;
+                else items.push({ ...it });
+            }));
+            const subtotal = items.reduce((s,i) => s + i.price * i.quantity, 0);
+            const totalProfit = items.reduce((s,i) => s + (i.price - i.cost) * i.quantity, 0);
+            const total = subtotal; // بدون توصيل
+            const itemsHtml = items.map(i => `<div style="display:flex; justify-content:space-between;"><span>${i.name} (${i.quantity} × ${i.price})</span><span>${i.quantity * i.price} ر.س</span></div>`).join('');
+            document.getElementById('monthlyInvoiceResult').innerHTML = `
+                <div style="background:var(--gray-50); border-radius:24px; padding:20px; margin-top:20px;">
+                    <h4 style="margin-bottom:12px;">فاتورة شهر ${month} للعميلة ${customerName}</h4>
+                    ${itemsHtml}
+                    <div style="border-top:1px solid var(--gray-200); margin:12px 0;"></div>
+                    <div style="display:flex; justify-content:space-between; font-weight:700;"><span>الإجمالي</span><span style="color:var(--accent-1);">${total} ر.س</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>الربح الصافي</span><span style="color:var(--success);">${totalProfit} ر.س</span></div>
+                </div>
+            `;
+        }
+
+        // ---------- صفحة التقارير ----------
+        function renderReportsPage(container) {
+            container.innerHTML = `
+                <div style="padding:4px 0;">
+                    <h3 style="font-size:24px; font-weight:700; margin-bottom:24px;">📊 تقارير المبيعات</h3>
+                    <div style="background:white; border-radius:32px; padding:24px; margin-bottom:24px; box-shadow:var(--shadow-sm);">
+                        <canvas id="salesChart" style="width:100%; height:200px;"></canvas>
+                    </div>
+                    <div style="background:white; border-radius:32px; padding:24px; margin-bottom:24px; box-shadow:var(--shadow-sm);">
+                        <canvas id="categoryChart" style="width:100%; height:200px;"></canvas>
+                    </div>
+                    <div style="background:white; border-radius:32px; padding:24px; box-shadow:var(--shadow-sm);">
+                        <h4 style="font-size:20px; margin-bottom:20px;">📋 تقرير مفصل</h4>
+                        <div id="detailedReport" style="line-height:2.2;"></div>
+                    </div>
+                </div>
+            `;
+            generateSalesChart();
+            generateCategoryChart();
+            generateDetailedReport();
+        }
+
+        function generateSalesChart() {
+            const last7Days = [...Array(7)].map((_,i) => { let d = new Date(); d.setDate(d.getDate()-i); return d.toDateString(); }).reverse();
+            const salesData = last7Days.map(day => invoices.filter(inv => new Date(inv.date).toDateString() === day).reduce((s,inv) => s + inv.total, 0));
+            new Chart(document.getElementById('salesChart'), {
+                type: 'line',
+                data: { labels: ['قبل 6','قبل 5','قبل 4','قبل 3','قبل 2','أمس','اليوم'], 
+                        datasets: [{ label: 'المبيعات', data: salesData, borderColor: '#FF8A9C', backgroundColor: 'rgba(255,138,156,0.1)', tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function generateCategoryChart() {
+            const catMap = {};
+            invoices.forEach(inv => inv.items.forEach(it => { catMap[it.category] = (catMap[it.category] || 0) + it.quantity; }));
+            new Chart(document.getElementById('categoryChart'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(catMap).length ? Object.keys(catMap) : ['لا توجد مبيعات'], 
+                        datasets: [{ data: Object.keys(catMap).length ? Object.values(catMap) : [1], backgroundColor: ['#FF8A9C','#A7C7E7','#FFD3B5','#A3D9A5','#D4B8D4'] }] }
+            });
+        }
+
+        function generateDetailedReport() {
+            const totalSales = invoices.reduce((s,i) => s + i.total, 0);
+            const totalProfit = invoices.reduce((s,i) => s + (i.profit || 0), 0);
+            const totalInvoices = invoices.length;
+            const avgOrder = totalInvoices ? (totalSales / totalInvoices).toFixed(2) : 0;
+            document.getElementById('detailedReport').innerHTML = `
+                <p><strong>💰 إجمالي المبيعات:</strong> ${totalSales} ر.س</p>
+                <p><strong>📈 صافي الربح:</strong> ${totalProfit} ر.س</p>
+                <p><strong>🧾 عدد الفواتير:</strong> ${totalInvoices}</p>
+                <p><strong>📊 متوسط قيمة الفاتورة:</strong> ${avgOrder} ر.س</p>
+            `;
+        }
+
+        // ---------- صفحة سجل الفواتير (مع حذف وعرض تفاصيل) ----------
+        function renderHistoryPage(container) {
+            let html = '<h3 style="font-size:26px; font-weight:700; margin-bottom:24px;">📜 سجل الفواتير</h3>';
+            if (invoices.length === 0) html += '<div style="background:white; border-radius:28px; padding:40px; text-align:center; color:var(--gray-500);">لا توجد فواتير محفوظة</div>';
+            else {
+                invoices.slice().reverse().forEach(inv => {
+                    html += `<div style="background:white; border-radius:24px; padding:20px; margin-bottom:16px; border:1px solid var(--gray-100); cursor:pointer;" onclick="viewInvoiceDetails('${inv.number}')">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-weight:700; font-size:16px;">${inv.number}</span>
+                                    <span style="color:var(--accent-1); font-weight:700;">${inv.total} ر.س</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:14px; color:var(--gray-500);">
+                                    <span>${new Date(inv.date).toLocaleDateString('ar-SA')}</span>
+                                    <span>${inv.customerName || 'عميلة'}</span>
+                                </div>
+                            </div>`;
+                });
+            }
+            container.innerHTML = html;
+        }
+
+        // ---------- صفحة الإعدادات (كل الخيارات تعمل 100%) ----------
+        function renderSettingsPage(container) {
+            // ملء خيارات العملاء للفاتورة الشهرية
+            setTimeout(() => {
+                const select = document.getElementById('monthlyCustomerSelect');
+                if (select) {
+                    select.innerHTML = customersDB.map(c => `<option value="${c.phone}">${c.name} - ${c.phone}</option>`).join('');
+                    if (customersDB.length === 0) select.innerHTML = '<option value="">لا يوجد عملاء</option>';
+                }
+            }, 100);
+            container.innerHTML = `
+                <div style="margin-bottom:24px;">
+                    <h3 style="font-size:24px; font-weight:700; margin-bottom:8px;">⚙️ الإعدادات</h3>
+                    <p style="color:var(--gray-500);">خصّصي التطبيق حسب رغبتك</p>
+                </div>
+                <div class="settings-list">
+                    <div class="settings-item" onclick="openModal('settingsGeneral')">
+                        <div class="settings-icon"><i class="fas fa-sliders-h"></i></div>
+                        <div class="settings-content"><div class="settings-title">الإعدادات العامة</div><div class="settings-subtitle">الوضع الليلي، اللغة</div></div>
+                        <div class="settings-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="settings-item" onclick="openModal('settingsCountryCode')">
+                        <div class="settings-icon"><i class="fas fa-globe"></i></div>
+                        <div class="settings-content"><div class="settings-title">رمز الدولة للواتساب</div><div class="settings-subtitle" id="countryCodeDisplay">${settings.countryCode} (${settings.codeBehavior === 'prepend' ? 'إضافة تلقائية' : 'بدون إضافة'})</div></div>
+                        <div class="settings-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="settings-item" onclick="openModal('settingsTemplates')">
+                        <div class="settings-icon"><i class="fas fa-file-alt"></i></div>
+                        <div class="settings-content"><div class="settings-title">قالب الرسالة</div><div class="settings-subtitle">تعديل نص واتساب</div></div>
+                        <div class="settings-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="settings-item" onclick="openModal('settingsBackup')">
+                        <div class="settings-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <div class="settings-content"><div class="settings-title">النسخ الاحتياطي</div><div class="settings-subtitle">تصدير واستيراد البيانات</div></div>
+                        <div class="settings-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="settings-item" onclick="openModal('settingsAds')">
+                        <div class="settings-icon"><i class="fas fa-bullhorn"></i></div>
+                        <div class="settings-content"><div class="settings-title">نظام الإعلانات</div><div class="settings-subtitle">إرسال عروض للعملاء</div></div>
+                        <div class="settings-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="settings-item" onclick="openModal('settingsCustomize')">
+                        <div class="settings-icon"><i class="fas fa-paint-brush"></i></div>
+                        <div class="settings-content"><div class="settings-title">تخصيص التطبيق</div><div class="settings-subtitle">الشعار، اسم المتجر</div></div>
+                        <div class="settings-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="settings-item" onclick="openModal('settingsSecurity')">
+                        <div class="settings-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="settings-content"><div class="settings-title">الأمان والخصوصية</div><div class="settings-subtitle">قفل التطبيق، PIN</div></div>
+                        <div class="settings-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ---------- توابع الإعدادات ----------
+        window.openModal = function(id) {
+            if (id === 'settingsCountryCode') {
+                const s = document.getElementById('countryCodeSelect');
+                if (s) s.value = settings.countryCode;
+                document.getElementById('customCountryCodeDiv').style.display = settings.countryCode === 'other' ? 'block' : 'none';
+                document.querySelectorAll('input[name="codeBehavior"]').forEach(r => { if (r.value === settings.codeBehavior) r.checked = true; });
+            }
+            if (id === 'settingsTemplates') document.getElementById('whatsappTemplate').value = settings.whatsappTemplate;
+            if (id === 'settingsGeneral') {
+                document.getElementById('darkMode').value = settings.darkMode;
+                document.getElementById('appLanguage').value = settings.language;
+            }
+            if (id === 'settingsSecurity') {
+                document.getElementById('appLock').value = settings.appLock;
+                document.getElementById('pinCode').value = settings.pinCode || '';
+            }
+            if (id === 'settingsCustomize') {
+                document.getElementById('storeName').value = settings.storeName;
+                document.getElementById('logoUrl').value = settings.logo || '';
+            }
+            document.getElementById(id).style.display = 'flex';
+        };
+        window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; };
+        window.addEventListener('click', e => { document.querySelectorAll('.modal').forEach(m => { if (e.target === m) closeModal(m.id); }); });
+
+        function saveGeneral() {
+            settings.darkMode = document.getElementById('darkMode').value;
+            settings.language = document.getElementById('appLanguage').value;
+            saveSettings();
+            closeModal('settingsGeneral');
+            showToast('تم حفظ الإعدادات العامة', '⚙️');
+        }
+        function saveCountryCode() {
+            const select = document.getElementById('countryCodeSelect');
+            settings.countryCode = select.value === 'other' ? (document.getElementById('customCountryCode').value || '967') : select.value;
+            settings.codeBehavior = document.querySelector('input[name="codeBehavior"]:checked').value;
+            saveSettings();
+            document.getElementById('countryCodeDisplay').innerText = `${settings.countryCode} (${settings.codeBehavior === 'prepend' ? 'إضافة تلقائية' : 'بدون إضافة'})`;
+            closeModal('settingsCountryCode');
+            showToast('تم حفظ رمز الدولة', '🌐');
+        }
+        function saveTemplate() {
+            settings.whatsappTemplate = document.getElementById('whatsappTemplate').value;
+            saveSettings();
+            closeModal('settingsTemplates');
+            showToast('تم حفظ القالب', '📄');
+        }
+        function saveCustomization() {
+            settings.storeName = document.getElementById('storeName').value;
+            settings.logo = document.getElementById('logoUrl').value;
+            saveSettings();
+            closeModal('settingsCustomize');
+            showToast('تم تخصيص التطبيق', '🎨');
+        }
+        function saveSecurity() {
+            settings.appLock = document.getElementById('appLock').value;
+            settings.pinCode = document.getElementById('pinCode').value;
+            saveSettings();
+            closeModal('settingsSecurity');
+            showToast('تم حفظ إعدادات الأمان', '🔒');
+        }
+        function sendAds() {
+            const msg = document.getElementById('adMessage').value;
+            if (!msg) { alert('اكتب الرسالة أولاً'); return; }
+            alert(`تم إرسال الإعلان إلى ${customersDB.length} عميلة (محاكاة)`);
+            closeModal('settingsAds');
+        }
+        function exportBackup() {
+            const data = { products, invoices, settings };
+            const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lorven_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            closeModal('settingsBackup');
+            showToast('تم تصدير النسخة', '📦');
+        }
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.products) { products = data.products; saveProducts(); }
+                    if (data.invoices) { invoices = data.invoices; saveInvoices(); updateCustomersDB(); }
+                    if (data.settings) { settings = { ...settings, ...data.settings }; saveSettings(); }
+                    showToast('تم استيراد النسخة', '✅');
+                    closeModal('settingsBackup');
+                    if (currentPage === 'settings') renderSettingsPage(document.getElementById('mainContent'));
+                    else if (currentPage === 'dashboard') renderDashboard(document.getElementById('mainContent'));
+                } catch { alert('ملف غير صالح'); }
+            };
+            reader.readAsText(file);
+            document.getElementById('importFile').value = '';
+        }
+
+        // ---------- تهيئة التطبيق ----------
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updateTime();
+            switchPage('dashboard');
+        });
+    </script>
+</body>
+</html>
