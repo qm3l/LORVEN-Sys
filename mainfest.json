@@ -1,16 +1,16 @@
 {
-  "name": "LORVEN SYS",                          // الاسم الكامل
-  "short_name": "LORVEN",                         // اسم مختصر يظهر تحت الأيقونة
+  "name": "LORVEN SYS",                        
+  "short_name": "LORVEN",                        
   "description": "نظام إدارة متجر لورڤين للتجميل",
-  "start_url": "/",                                // الصفحة الرئيسية
-  "display": "standalone",                          // يفتح كتطبيق مستقل
-  "background_color": "#ffffff",                    // لون خلفية شاشة البداية
-  "theme_color": "#d44c68",                          // لون شريط الحالة (استخدم لون علامتك التجارية)
-  "orientation": "portrait",                         // إجبار الوضع العمودي (مناسب للهواتف)
+  "start_url": "/",                                
+  "display": "standalone",                      
+  "background_color": "#ffffff",               
+  "theme_color": "#d44c68",                       
+  "orientation": "portrait",                     
   "scope": "/",
   "icons": [
     {
-      "src": "/icons/icon-192.png",                  // المسار الصحيح للأيقونة 192
+      "src": "/icons/icon-192.png",              
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
@@ -22,7 +22,7 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-180.png",                  // أيقونة آيفون
+      "src": "/icons/icon-180.png",          
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
