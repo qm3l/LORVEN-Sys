@@ -1,23 +1,23 @@
 const CACHE_NAME = 'lorven-cache-v1';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/state.js',
-  '/js/data.js',
-  '/js/i18n.js',
-  '/js/helpers.js',
-  '/js/ui.js',
-  '/js/products.js',
-  '/js/invoices.js',
-  '/js/history.js',
-  '/js/reports.js',
-  '/js/settings.js',
-  '/js/importExport.js',
-  '/js/main.js',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon-180.png'
+  'index.html',
+  'css/style.css',
+  'js/state.js',
+  'js/data.js',
+  'js/i18n.js',
+  'js/helpers.js',
+  'js/ui.js',
+  'js/products.js',
+  'js/invoices.js',
+  'js/history.js',
+  'js/reports.js',
+  'js/settings.js',
+  'js/importExport.js',
+  'js/main.js',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'icons/icon-180.png'
 ];
 
 // تثبيت الـ service worker وتخزين الملفات
